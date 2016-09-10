@@ -1,0 +1,53 @@
+#!/usr/bin/env ruby
+
+require "bundler/setup"
+require "mailrabbit"
+
+class Handler
+  def handle_message(msg)
+    cmd, *args = msg.split
+    case cmd
+    when "add_member"
+      add_member(*args)
+    when "remove_member"
+      remove_member(*args)
+    when "change_email"
+      change_email(*args)
+    when "change_delivery"
+      change_delivery(*args)
+    else
+      Logger.warn "Unknown message #{msg.inspect}"
+    end
+  end
+
+  def add_member(list, email, delivery)
+    mailman("/home/mailman/delivery", list, email, delivery)
+  end
+
+  def remove_member(list, email)
+    mailman(
+      "/home/mailman/bin/remove_members",
+      "--nouserack", "--noadminack",
+      list, email
+    )
+  end
+
+  def change_email(list, old_email, new_email)
+    remove_member(list, old_email)
+    add_member(list, new_email, email_delivery)
+  end
+
+  def change_delivery(list, email, delivery)
+    add_member(list, email, delivery)
+  end
+
+  def mailman(*cmd)
+    system("sudo", "-u", "mailman", *cmd)
+  end
+end
+
+hostname = ARGV[0] || "localhost"
+handler = Handler.new
+Mailrabbit.worker(hostname) do |msg|
+  handler.handle_message(msg)
+end
