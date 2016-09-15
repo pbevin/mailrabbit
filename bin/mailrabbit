@@ -34,7 +34,7 @@ class Handler
 
   def change_email(list, old_email, new_email)
     remove_member(list, old_email)
-    add_member(list, new_email, email_delivery)
+    add_member(list, new_email, "full") # XXX should preserve delivery
   end
 
   def change_delivery(list, email, delivery)
@@ -48,6 +48,8 @@ end
 
 hostname = ARGV[0] || "localhost"
 handler = Handler.new
-Mailrabbit.worker(hostname) do |msg|
+$stdout.sync = true
+logger = Logger.new($stdout)
+Mailrabbit.worker(hostname, logger: logger) do |msg|
   handler.handle_message(msg)
 end

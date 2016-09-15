@@ -28,15 +28,18 @@ module Mailrabbit
   # Mailrabbit.worker("rabbitmq_hostname") do |message|
   #   puts "Received #{message}"
   # end
-  def self.worker(hostname)
+  def self.worker(hostname, logger: NullLogger.new)
     find_exchange(hostname) do |exchange, channel|
       queue = channel.queue("worker")
       queue.bind(exchange)
 
+      logger.info("Mailrabbit: connected to exchange #{exchange.name}")
       opts = { block: true, manual_ack: true }
       queue.subscribe(opts) do |delivery_info, _properties, payload|
+        logger.info("Mailrabbit: received #{payload}")
         yield payload
         channel.ack(delivery_info.delivery_tag)
+        logger.info("Mailrabbit: acknowledged #{payload}")
       end
     end
   end
@@ -51,5 +54,12 @@ module Mailrabbit
 
   ensure
     conn.close if conn
+  end
+
+  class NullLogger
+    def debug(*); end
+    def info(*); end
+    def warn(*); end
+    def error(*); end
   end
 end
