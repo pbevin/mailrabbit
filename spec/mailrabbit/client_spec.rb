@@ -51,4 +51,5 @@ describe Mailrabbit::Client do
       delivery: Mailrabbit::DELIVER_DIGEST
     )
   end
+
 end
