@@ -42,7 +42,7 @@ class Handler
   end
 
   def mailman(*cmd)
-    system("sudo", "-u", "mailman", *cmd)
+    system("sudo", "-u", "list", *cmd)
   end
 end
 
